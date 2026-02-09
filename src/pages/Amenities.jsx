@@ -2,195 +2,123 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "../utils";
 import { Button } from "@/components/ui/button";
-import { 
-  Trees, Dumbbell, ShieldCheck, Car, Waves, 
+import {
+  Trees, Dumbbell, ShieldCheck, Car, Waves,
   Users, Fence, Lightbulb, Droplets, PlayCircle,
   Building, Church
 } from "lucide-react";
+import bgAmenities from '@/images/bg-amenties.jpeg';
+import communityGarden from '@/images/amenities/community_garden.jpg';
+import basketballCourt from '@/images/amenities/basketball_court.jpg';
+import pavillion from '@/images/amenities/pavillion.jpg';
 
 const amenities = [
-  {
-    icon: ShieldCheck,
-    title: "24/7 Security",
-    description: "Round-the-clock security personnel and CCTV monitoring for your peace of mind."
-  },
-  {
-    icon: Fence,
-    title: "Gated Community",
-    description: "Exclusive gated entrance with controlled access for residents only."
-  },
-  {
-    icon: Trees,
-    title: "Parks & Greenery",
-    description: "Beautifully landscaped parks and open spaces for relaxation and recreation."
-  },
-  {
-    icon: PlayCircle,
-    title: "Playground",
-    description: "Safe and fun playground areas designed for children of all ages."
-  },
-  {
-    icon: Dumbbell,
-    title: "Fitness Area",
-    description: "Outdoor fitness stations for health-conscious residents."
-  },
-  {
-    icon: Waves,
-    title: "Swimming Pool",
-    description: "Community swimming pool for leisure and exercise."
-  },
-  {
-    icon: Users,
-    title: "Clubhouse",
-    description: "Multi-purpose clubhouse for community events and gatherings."
-  },
-  {
-    icon: Car,
-    title: "Wide Roads",
-    description: "Well-paved wide roads for easy vehicle access and parking."
-  },
-  {
-    icon: Lightbulb,
-    title: "Street Lights",
-    description: "Well-lit streets and common areas for safety at night."
-  },
-  {
-    icon: Droplets,
-    title: "Water System",
-    description: "Reliable water supply with backup storage facilities."
-  },
-  {
-    icon: Building,
-    title: "Commercial Area",
-    description: "Nearby commercial establishments for daily needs."
-  },
-  {
-    icon: Church,
-    title: "Chapel",
-    description: "Community chapel for spiritual gatherings and services."
-  },
+  { icon: ShieldCheck, title: "24/7 Security", description: "Round-the-clock security and CCTV monitoring" },
+  { icon: Fence, title: "Gated Community", description: "Controlled access for residents only" },
+  { icon: Trees, title: "Parks & Greenery", description: "Landscaped parks and open spaces" },
+  { icon: PlayCircle, title: "Playground", description: "Safe play areas for children" },
+  { icon: Dumbbell, title: "Fitness Area", description: "Outdoor fitness stations" },
+  { icon: Waves, title: "Swimming Pool", description: "Community pool for leisure" },
+  { icon: Users, title: "Clubhouse", description: "Multi-purpose community hall" },
+  { icon: Car, title: "Wide Roads", description: "Well-paved roads and parking" },
+  { icon: Lightbulb, title: "Street Lights", description: "Well-lit streets at night" },
+  { icon: Droplets, title: "Water System", description: "Reliable water supply" },
+  { icon: Building, title: "Commercial Area", description: "Nearby commercial spaces" },
+  { icon: Church, title: "Chapel", description: "Community chapel" },
+];
+
+const galleryImages = [
+  { src: basketballCourt, label: "Basketball Court" },
+  { src: communityGarden, label: "Community Garden" },
+  { src: pavillion, label: "Pavillion" },
 ];
 
 export default function Amenities() {
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div 
-        className="relative py-24 px-4"
-        style={{
-          backgroundImage: `url('https://images.unsplash.com/photo-1582268611958-ebfd161ef9cf?w=1920&q=80')`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-        }}
-      >
-        <div className="absolute inset-0 bg-[#166534]/85" />
+    <div className="min-h-screen bg-[#f8f6f0]">
+      {/* Header with built-in bottom fade */}
+      <div className="relative bg-[#0a3620] pt-32 pb-20 px-4">
+        <div className="absolute inset-0">
+          <img src={bgAmenities} alt="" className="w-full h-full object-cover opacity-20" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#0a3620]/80 to-[#0a3620]" />
+        </div>
         <div className="relative max-w-7xl mx-auto text-center">
-          <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-            Community Amenities
+          <p className="text-xs tracking-[0.3em] uppercase text-[#4ade80] mb-4 font-sans font-medium">Community Living</p>
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-light text-white mb-4">
+            Community <span className="italic">Amenities</span>
           </h1>
-          <p className="text-gray-300 text-lg max-w-2xl mx-auto">
-            Enjoy a complete lifestyle with world-class amenities designed for comfort, convenience, and community living
+          <p className="text-white/50 text-base max-w-xl mx-auto font-light font-sans">
+            World-class amenities designed for comfort and community living
           </p>
+          <div className="w-16 h-[1px] bg-[#15803d] mx-auto mt-6" />
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         {/* Amenities Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {amenities.map((amenity, index) => {
             const Icon = amenity.icon;
             return (
               <div
                 key={index}
-                className="bg-white rounded-xl p-8 shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 group"
+                className="bg-white p-6 transition-all duration-500 border border-gray-100 hover:border-[#15803d]/30 group text-center"
               >
-                <div className="w-16 h-16 bg-[#22c55e]/10 group-hover:bg-[#22c55e]/20 rounded-xl flex items-center justify-center mb-6 transition-colors">
-                  <Icon className="w-8 h-8 text-[#22c55e]" />
+                <div className="w-10 h-10 border border-[#15803d]/30 flex items-center justify-center mb-4 mx-auto group-hover:bg-[#15803d] group-hover:border-[#15803d] transition-all duration-500">
+                  <Icon className="w-4 h-4 text-[#15803d] group-hover:text-white transition-colors duration-500" />
                 </div>
-                <h3 className="text-xl font-bold text-[#166534] mb-3">{amenity.title}</h3>
-                <p className="text-gray-600 leading-relaxed">{amenity.description}</p>
+                <h3 className="text-sm font-medium text-[#0a3620] mb-1">{amenity.title}</h3>
+                <p className="text-gray-400 text-xs font-sans font-light">{amenity.description}</p>
               </div>
             );
           })}
         </div>
 
-        {/* Features Section */}
-        <div className="mt-20">
-          <div className="bg-white rounded-2xl overflow-hidden shadow-lg">
-            <div className="grid grid-cols-1 lg:grid-cols-2">
-              <div 
-                className="h-64 lg:h-auto"
-                style={{
-                  backgroundImage: `url('https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&q=80')`,
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center',
-                }}
-              />
-              <div className="p-8 lg:p-12 flex flex-col justify-center">
-                <h2 className="text-3xl font-bold text-[#166534] mb-4">
-                  Live the Vicmar Lifestyle
-                </h2>
-                <p className="text-gray-600 mb-6 leading-relaxed">
-                  At Vicmar Homes, we believe that a home is more than just four walls. It's about the community, the environment, and the lifestyle. Our carefully planned amenities are designed to bring families together and create lasting memories.
-                </p>
-                <ul className="space-y-3 mb-8">
-                  <li className="flex items-center gap-3 text-gray-700">
-                    <div className="w-2 h-2 bg-[#22c55e] rounded-full" />
-                    Family-oriented community
-                  </li>
-                  <li className="flex items-center gap-3 text-gray-700">
-                    <div className="w-2 h-2 bg-[#22c55e] rounded-full" />
-                    Safe and secure environment
-                  </li>
-                  <li className="flex items-center gap-3 text-gray-700">
-                    <div className="w-2 h-2 bg-[#22c55e] rounded-full" />
-                    Well-maintained facilities
-                  </li>
-                  <li className="flex items-center gap-3 text-gray-700">
-                    <div className="w-2 h-2 bg-[#22c55e] rounded-full" />
-                    Active homeowner association
-                  </li>
-                </ul>
-                <Link to={createPageUrl("Listings")}>
-                  <Button className="bg-[#22c55e] hover:bg-[#16a34a] w-fit">
-                    Explore Our Properties
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-
         {/* Gallery Section */}
         <div className="mt-20">
-          <h2 className="text-3xl font-bold text-[#166534] mb-8 text-center">
-            Community Gallery
-          </h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[
-              "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=500&q=80",
-              "https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=500&q=80",
-              "https://images.unsplash.com/photo-1600607687644-aac4c3eac7f4?w=500&q=80",
-              "https://images.unsplash.com/photo-1600573472550-8090b5e0745e?w=500&q=80",
-              "https://images.unsplash.com/photo-1600566752355-35792bedcfea?w=500&q=80",
-              "https://images.unsplash.com/photo-1600210492493-0946911123ea?w=500&q=80",
-              "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=500&q=80",
-              "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=500&q=80",
-            ].map((img, idx) => (
+          <div className="text-center mb-10">
+            <p className="text-xs tracking-[0.3em] uppercase text-[#15803d] mb-4 font-sans font-medium">Gallery</p>
+            <h2 className="text-3xl md:text-4xl font-light text-[#0a3620]">
+              Community <span className="italic">Gallery</span>
+            </h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {galleryImages.map((img, idx) => (
               <div
                 key={idx}
-                className="relative h-48 rounded-xl overflow-hidden group cursor-pointer"
+                className="relative h-64 overflow-hidden group cursor-pointer"
               >
                 <img
-                  src={img}
-                  alt={`Gallery ${idx + 1}`}
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                  src={img.src}
+                  alt={img.label}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                 />
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0a3620]/60 via-transparent to-transparent group-hover:from-[#0a3620]/80 transition-all duration-500" />
+                <div className="absolute bottom-4 left-4">
+                  <p className="text-white text-sm font-medium font-sans tracking-wide">{img.label}</p>
+                </div>
               </div>
             ))}
           </div>
         </div>
+      </div>
+
+      {/* CTA Section */}
+      <div className="bg-[#0a3620] py-16">
+          <div className="max-w-3xl mx-auto px-4 text-center">
+            <p className="text-xs tracking-[0.3em] uppercase text-[#4ade80] mb-4 font-sans font-medium">Explore</p>
+            <h2 className="text-3xl md:text-4xl font-light text-white mb-4">
+              Ready to See Our <span className="italic">Properties</span>?
+            </h2>
+            <p className="text-white/50 mb-8 font-light font-sans">
+              Explore our collection of quality homes designed for modern Filipino families.
+            </p>
+            <Link to={createPageUrl("Listings")}>
+              <Button className="bg-[#15803d] hover:bg-[#116b33] rounded-none tracking-widest uppercase text-xs font-sans px-10 py-6">
+                Explore Properties
+              </Button>
+            </Link>
+          </div>
       </div>
     </div>
   );

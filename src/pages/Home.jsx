@@ -4,7 +4,6 @@ import { useQuery } from "@tanstack/react-query";
 import HeroSection from "../components/home/HeroSection";
 import PropertyTypes from "../components/home/PropertyTypes";
 import ServicesSection from "../components/home/ServicesSection";
-import RecentListings from "../components/home/RecentListings";
 
 export default function Home() {
   const { data: properties = [], isLoading } = useQuery({
@@ -23,7 +22,6 @@ export default function Home() {
       <HeroSection />
       <PropertyTypes propertyCounts={propertyCounts} />
       <ServicesSection />
-      <RecentListings properties={properties} isLoading={isLoading} />
     </div>
   );
 }
