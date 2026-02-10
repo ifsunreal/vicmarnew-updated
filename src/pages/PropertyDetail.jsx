@@ -17,6 +17,7 @@ import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import PanoramaViewer from "@/components/shared/PanoramaViewer";
+import { useScrollReveal } from "@/hooks/useScrollReveal";
 
 // Fix leaflet marker icon
 delete L.Icon.Default.prototype._getIconUrl;
@@ -42,6 +43,7 @@ export default function PropertyDetail() {
   const [showFloorPlan, setShowFloorPlan] = useState(false);
   const [selectedFloorPlan, setSelectedFloorPlan] = useState(null);
   const [inquiryForm, setInquiryForm] = useState({ name: "", email: "", phone: "", message: "" });
+  const revealRef = useScrollReveal();
 
   const { data: property, isLoading } = useQuery({
     queryKey: ["property", propertyId],
@@ -105,7 +107,7 @@ export default function PropertyDetail() {
   const prevImage = () => setCurrentImageIndex((prev) => (prev - 1 + allImages.length) % allImages.length);
 
   return (
-    <div className="min-h-screen bg-[#f8f6f0]">
+    <div ref={revealRef} className="min-h-screen bg-[#f8f6f0]">
       {/* Back Button */}
       <div className="bg-white/80 backdrop-blur-sm border-b border-gray-100 fixed top-20 left-0 right-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
@@ -124,7 +126,7 @@ export default function PropertyDetail() {
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-8">
             {/* Image Gallery */}
-            <div className="bg-white overflow-hidden border border-gray-100">
+            <div className="reveal reveal-up bg-white overflow-hidden border border-gray-100" style={{ animationDuration: '0.7s' }}>
               <div className="relative h-96 md:h-[500px]">
                 <img
                   src={allImages[currentImageIndex]}
@@ -192,7 +194,7 @@ export default function PropertyDetail() {
             </div>
 
             {/* Quick Actions */}
-            <div className="flex flex-wrap gap-3">
+            <div className="reveal reveal-up flex flex-wrap gap-3" style={{ animationDuration: '0.6s' }}>
               {property.panorama_image && (
                 <Button
                   onClick={() => setShowVirtualTour(true)}
@@ -222,7 +224,7 @@ export default function PropertyDetail() {
 
             {/* Floor Plans Section */}
             {property.floor_plans && (
-              <div className="bg-white p-8 border border-gray-100">
+              <div className="reveal reveal-up bg-white p-8 border border-gray-100" style={{ animationDuration: '0.7s' }}>
                 <p className="text-xs tracking-[0.3em] uppercase text-[#15803d] mb-2 font-sans font-medium">Plans</p>
                 <h2 className="text-xl text-[#0a3620] mb-6">Floor Plans</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -277,7 +279,7 @@ export default function PropertyDetail() {
             )}
 
             {/* Property Info */}
-            <div className="bg-white p-8 border border-gray-100">
+            <div className="reveal reveal-up bg-white p-8 border border-gray-100" style={{ animationDuration: '0.7s' }}>
               <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-8">
                 <div>
                   <span className="text-xs tracking-[0.3em] uppercase text-[#15803d] font-sans font-medium">
@@ -354,7 +356,7 @@ export default function PropertyDetail() {
 
             {/* Map */}
             {property.latitude && property.longitude && (
-              <div className="bg-white p-8 border border-gray-100">
+              <div className="reveal reveal-up bg-white p-8 border border-gray-100" style={{ animationDuration: '0.7s' }}>
                 <p className="text-xs tracking-[0.3em] uppercase text-[#15803d] mb-2 font-sans font-medium">Location</p>
                 <h2 className="text-lg text-[#0a3620] mb-4">Property Location</h2>
                 <div className="h-80 overflow-hidden">
@@ -378,7 +380,7 @@ export default function PropertyDetail() {
 
           {/* Sidebar - Inquiry Form */}
           <div className="lg:col-span-1">
-            <div className="bg-white p-8 border border-gray-100 sticky top-36">
+            <div className="reveal reveal-right bg-white p-8 border border-gray-100 sticky top-36" style={{ animationDuration: '0.7s', animationDelay: '0.2s' }}>
               <p className="text-xs tracking-[0.3em] uppercase text-[#15803d] mb-2 font-sans font-medium">Inquire</p>
               <h2 className="text-lg text-[#0a3620] mb-2">Interested in this property?</h2>
               <p className="text-gray-400 text-sm mb-6 font-sans font-light">Fill out the form below and we'll get back to you shortly.</p>

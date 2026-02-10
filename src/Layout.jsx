@@ -27,7 +27,6 @@ export default function Layout({ children, currentPageName }) {
     { name: "Listings", page: "Listings" },
     { name: "Properties", page: "Properties" },
     { name: "Amenities", page: "Amenities" },
-    { name: "Vicinity Map", page: "VicinityMap" },
     { name: "About Us", page: "AboutUs" },
   ];
 
@@ -130,7 +129,7 @@ export default function Layout({ children, currentPageName }) {
       <main className="flex-1">{children}</main>
 
       {/* Footer */}
-      <footer className="relative text-white">
+      <footer className={`relative text-white${isHomePage ? " snap-section" : ""}`}>
         {/* Background image */}
         <div className="absolute inset-0">
           <img src={bgFooter} alt="" className="w-full h-full object-cover" />

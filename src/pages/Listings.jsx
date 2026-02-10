@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import bgListing from '@/images/bg-listing.jpeg';
+import { useScrollReveal } from "@/hooks/useScrollReveal";
 import { useQuery } from "@tanstack/react-query";
 import PropertyCard from "../components/shared/PropertyCard";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -16,6 +17,7 @@ const typeLabels = {
 };
 
 export default function Listings() {
+  const revealRef = useScrollReveal();
   const urlParams = new URLSearchParams(window.location.search);
 
   const [search, setSearch] = useState("");
@@ -92,7 +94,7 @@ export default function Listings() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8f6f0]">
+    <div className="min-h-screen bg-[#f8f6f0]" ref={revealRef}>
       {/* Header with built-in bottom fade */}
       <div className="relative bg-[#0a3620] pt-32 pb-20 px-4">
         <div className="absolute inset-0">
@@ -100,20 +102,20 @@ export default function Listings() {
           <div className="absolute inset-0 bg-gradient-to-b from-[#0a3620]/80 to-[#0a3620]" />
         </div>
         <div className="relative max-w-7xl mx-auto text-center">
-          <p className="text-xs tracking-[0.3em] uppercase text-[#4ade80] mb-4 font-sans font-medium">Browse Our Collection</p>
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-light text-white mb-4">
+          <p className="text-xs tracking-[0.3em] uppercase text-[#4ade80] mb-4 font-sans font-medium header-animate header-animate-delay-1">Browse Our Collection</p>
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-light text-white mb-4 header-animate header-animate-delay-2">
             Property <span className="italic">Listings</span>
           </h1>
-          <p className="text-white/50 text-base max-w-xl mx-auto font-light font-sans">
+          <p className="text-white/50 text-base max-w-xl mx-auto font-light font-sans header-animate header-animate-delay-3">
             Browse all available properties from Vicmar Homes
           </p>
-          <div className="w-16 h-[1px] bg-[#15803d] mx-auto mt-6" />
+          <div className="w-16 h-[1px] bg-[#15803d] mx-auto mt-6 header-animate header-animate-delay-4" />
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         {/* Search & Filter Bar */}
-        <div className="bg-white border border-gray-100 p-5 mb-8">
+        <div className="bg-white border border-gray-100 p-5 mb-8 reveal reveal-up" style={{ animationDuration: '0.7s' }}>
           <div className="flex flex-col lg:flex-row gap-4 items-center">
             {/* Search */}
             <div className="relative flex-1 w-full">
@@ -225,7 +227,7 @@ export default function Listings() {
         </div>
 
         {/* Results Count */}
-        <div className="mb-6">
+        <div className="mb-6 reveal reveal-fade" style={{ animationDuration: '0.5s' }}>
           <p className="text-gray-500 font-sans text-sm font-light">
             Showing <span className="font-medium text-[#0a3620]">{filteredProperties.length}</span> properties
           </p>
@@ -233,7 +235,7 @@ export default function Listings() {
 
         {/* Property Grid */}
         {isLoading ? (
-          <div className={`grid gap-6 ${viewMode === "grid" ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3" : "grid-cols-1"}`}>
+          <div className={`grid gap-6 ${viewMode === "grid" ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3" : "grid-cols-1"} reveal reveal-up`} style={{ animationDuration: '0.6s' }}>
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <div key={i} className="bg-white h-96 animate-pulse" />
             ))}
@@ -246,7 +248,7 @@ export default function Listings() {
             </Button>
           </div>
         ) : (
-          <div className={`grid gap-6 ${viewMode === "grid" ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3" : "grid-cols-1"}`}>
+          <div className={`grid gap-6 ${viewMode === "grid" ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3" : "grid-cols-1"} reveal reveal-up`} style={{ animationDuration: '0.6s' }}>
             {filteredProperties.map((property) => (
               <PropertyCard key={property.id} property={property} />
             ))}

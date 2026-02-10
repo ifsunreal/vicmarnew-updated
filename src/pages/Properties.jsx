@@ -1,158 +1,554 @@
-import React from "react";
-import { Link } from "react-router-dom";
+import React, { useState, useRef, useCallback, useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "../utils";
-import { base44 } from "@/api/base44Client";
-import { useQuery } from "@tanstack/react-query";
+import propertyData from "../../data/propertyData.json";
+import baseMapImg from "@/images/properties_map/baseMap2.jpg";
+import { MapPin, ZoomIn, ZoomOut, Maximize2, Info, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Building, Building2, Home, ArrowRight } from "lucide-react";
+import { useScrollReveal } from "@/hooks/useScrollReveal";
 
-// Import property images
-import duplexImg from '@/images/properties/Duplex Deluxe.png';
-import triplexImg from '@/images/properties/Triplex.png';
-import rowhouseImg from '@/images/properties/Rowhouse Economic.png';
-import bgProperties from '@/images/bg-properties.jpeg';
+const MAP_NATURAL_WIDTH = 1404;
+const MAP_NATURAL_HEIGHT = 908;
 
-const propertyTypes = [
-  {
-    type: "duplex",
-    label: "Duplex Units",
-    icon: Building,
-    description: "Premium duplex homes featuring modern architecture with 3 bedrooms and 2 bathrooms. Perfect for growing families who want quality living spaces with spacious layouts and premium finishes.",
-    image: duplexImg
-  },
-  {
-    type: "triplex",
-    label: "Triplex Units",
-    icon: Building2,
-    description: "Affordable triplex homes available in End Unit and Center Unit configurations. Features 3 bedrooms and 2 bathrooms with practical layouts ideal for families.",
-    image: triplexImg
-  },
-  {
-    type: "rowhouse",
-    label: "Rowhouse Units",
-    icon: Home,
-    description: "Budget-friendly rowhouse units including Economic, Compound, and Socialized options. Perfect for first-time homebuyers and those looking for affordable housing solutions.",
-    image: rowhouseImg
-  },
-];
+// Color mapping for property types
+const typeColors = {
+  "Duplex Premiere": { fill: "rgba(21, 128, 61, 0.35)", stroke: "#15803d", hover: "rgba(21, 128, 61, 0.55)" },
+  "Duplex Premier": { fill: "rgba(21, 128, 61, 0.35)", stroke: "#15803d", hover: "rgba(21, 128, 61, 0.55)" },
+  "Duplex Deluxe": { fill: "rgba(37, 99, 235, 0.35)", stroke: "#2563eb", hover: "rgba(37, 99, 235, 0.55)" },
+  "Duplex Economic": { fill: "rgba(234, 179, 8, 0.35)", stroke: "#ca8a04", hover: "rgba(234, 179, 8, 0.55)" },
+  "Triplex": { fill: "rgba(168, 85, 247, 0.35)", stroke: "#9333ea", hover: "rgba(168, 85, 247, 0.55)" },
+  "RowHouse Socialized": { fill: "rgba(239, 68, 68, 0.35)", stroke: "#dc2626", hover: "rgba(239, 68, 68, 0.55)" },
+  "RowHouse Compound": { fill: "rgba(249, 115, 22, 0.35)", stroke: "#ea580c", hover: "rgba(249, 115, 22, 0.55)" },
+  "VACANT LOT": { fill: "rgba(107, 114, 128, 0.25)", stroke: "#6b7280", hover: "rgba(107, 114, 128, 0.45)" },
+  " VACANT LOT": { fill: "rgba(107, 114, 128, 0.25)", stroke: "#6b7280", hover: "rgba(107, 114, 128, 0.45)" },
+};
+
+const defaultColor = { fill: "rgba(107, 114, 128, 0.3)", stroke: "#6b7280", hover: "rgba(107, 114, 128, 0.5)" };
+
+// Map property type from map data to listing type for navigation
+function getListingType(type) {
+  const t = type.toLowerCase();
+  if (t.includes("duplex")) return "duplex";
+  if (t.includes("triplex")) return "triplex";
+  if (t.includes("rowhouse") || t.includes("row house")) return "rowhouse";
+  return null;
+}
+
+function parseCoords(coordsStr) {
+  const nums = coordsStr.split(",").map(Number);
+  const points = [];
+  for (let i = 0; i < nums.length; i += 2) {
+    points.push({ x: nums[i], y: nums[i + 1] });
+  }
+  return points;
+}
+
+function pointsToSvg(points) {
+  return points.map(p => `${p.x},${p.y}`).join(" ");
+}
+
+// Flatten all property data into a single array
+function getAllProperties() {
+  const all = [];
+  for (const [category, properties] of Object.entries(propertyData)) {
+    properties.forEach((prop, idx) => {
+      all.push({
+        id: `${category}-${idx}`,
+        category,
+        ...prop,
+      });
+    });
+  }
+  return all;
+}
+
+function getUnitInfo(info) {
+  const units = [];
+  if (info.unit) units.push({ key: "", data: info.unit });
+  if (info.unitA) units.push({ key: "A", data: info.unitA });
+  if (info.unitB) units.push({ key: "B", data: info.unitB });
+  if (info.unitC) units.push({ key: "C", data: info.unitC });
+  // Handle vacant lots with empty string key
+  if (info[""] && info[""].lotNum) units.push({ key: "", data: info[""] });
+  return units;
+}
+
+function getAvailabilityColor(status) {
+  const s = status.toLowerCase();
+  if (s === "available") return "text-emerald-400";
+  if (s === "sold") return "text-red-400";
+  if (s === "reserved") return "text-amber-400";
+  if (s === "vacant") return "text-gray-400";
+  return "text-gray-300";
+}
+
+function getAvailabilityDot(status) {
+  const s = status.toLowerCase();
+  if (s === "available") return "bg-emerald-400";
+  if (s === "sold") return "bg-red-400";
+  if (s === "reserved") return "bg-amber-400";
+  if (s === "vacant") return "bg-gray-400";
+  return "bg-gray-400";
+}
 
 export default function Properties() {
-  const { data: allProperties = [] } = useQuery({
-    queryKey: ["properties-count"],
-    queryFn: () => base44.entities.Property.list(),
-  });
+  const navigate = useNavigate();
+  const allProperties = useMemo(() => getAllProperties(), []);
+  const containerRef = useRef(null);
+  const mapRef = useRef(null);
+  const revealRef = useScrollReveal();
 
-  const getTypeCount = (type) => allProperties.filter(p => p.property_type === type).length;
-  const getTypePriceRange = (type) => {
-    const props = allProperties.filter(p => p.property_type === type);
-    if (props.length === 0) return null;
-    const prices = props.map(p => p.price).filter(Boolean);
-    if (prices.length === 0) return null;
-    const min = Math.min(...prices);
-    const max = Math.max(...prices);
-    const format = (v) => new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP', maximumFractionDigits: 0 }).format(v);
-    return min === max ? format(min) : `${format(min)} - ${format(max)}`;
+  const [hoveredProp, setHoveredProp] = useState(null);
+  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
+  const [selectedProp, setSelectedProp] = useState(null);
+
+  // Pan & Zoom state
+  const [scale, setScale] = useState(1);
+  const [translate, setTranslate] = useState({ x: 0, y: 0 });
+  const [isPanning, setIsPanning] = useState(false);
+  const panStart = useRef({ x: 0, y: 0 });
+  const translateStart = useRef({ x: 0, y: 0 });
+
+  // Legend visibility
+  const [showLegend, setShowLegend] = useState(false);
+
+  const handleZoomIn = () => {
+    setScale(prev => Math.min(prev * 1.3, 5));
   };
 
+  const handleZoomOut = () => {
+    setScale(prev => {
+      const next = prev / 1.3;
+      if (next <= 1) {
+        setTranslate({ x: 0, y: 0 });
+        return 1;
+      }
+      return next;
+    });
+  };
+
+  const handleReset = () => {
+    setScale(1);
+    setTranslate({ x: 0, y: 0 });
+  };
+
+  // Mouse wheel zoom
+  const handleWheel = useCallback((e) => {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? 0.9 : 1.1;
+    setScale(prev => {
+      const next = Math.max(1, Math.min(prev * delta, 5));
+      if (next <= 1) {
+        setTranslate({ x: 0, y: 0 });
+      }
+      return next;
+    });
+  }, []);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (el) {
+      el.addEventListener("wheel", handleWheel, { passive: false });
+      return () => el.removeEventListener("wheel", handleWheel);
+    }
+  }, [handleWheel]);
+
+  // Pan handlers
+  const handleMouseDown = (e) => {
+    if (e.target.closest(".map-control") || e.target.closest(".tooltip-card")) return;
+    setIsPanning(true);
+    panStart.current = { x: e.clientX, y: e.clientY };
+    translateStart.current = { ...translate };
+  };
+
+  const handleMouseMove = useCallback((e) => {
+    if (isPanning) {
+      const dx = e.clientX - panStart.current.x;
+      const dy = e.clientY - panStart.current.y;
+      setTranslate({
+        x: translateStart.current.x + dx,
+        y: translateStart.current.y + dy,
+      });
+    }
+  }, [isPanning]);
+
+  const handleMouseUp = () => {
+    setIsPanning(false);
+  };
+
+  // Touch pan handlers
+  const handleTouchStart = (e) => {
+    if (e.touches.length === 1) {
+      setIsPanning(true);
+      panStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      translateStart.current = { ...translate };
+    }
+  };
+
+  const handleTouchMove = useCallback((e) => {
+    if (isPanning && e.touches.length === 1) {
+      const dx = e.touches[0].clientX - panStart.current.x;
+      const dy = e.touches[0].clientY - panStart.current.y;
+      setTranslate({
+        x: translateStart.current.x + dx,
+        y: translateStart.current.y + dy,
+      });
+    }
+  }, [isPanning]);
+
+  const handleTouchEnd = () => {
+    setIsPanning(false);
+  };
+
+  const handlePolygonHover = (e, prop) => {
+    const container = containerRef.current;
+    if (!container) return;
+    const rect = container.getBoundingClientRect();
+    setTooltipPos({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    });
+    setHoveredProp(prop);
+  };
+
+  const handlePolygonClick = (prop) => {
+    setSelectedProp(prop);
+  };
+
+  const handleViewListing = (type) => {
+    const listingType = getListingType(type);
+    if (listingType) {
+      navigate(createPageUrl("Listings") + `?type=${listingType}`);
+    } else {
+      navigate(createPageUrl("Listings"));
+    }
+  };
+
+  const legendItems = [
+    { label: "Duplex Premiere", color: "#15803d" },
+    { label: "Duplex Deluxe", color: "#2563eb" },
+    { label: "Duplex Economic", color: "#ca8a04" },
+    { label: "Triplex", color: "#9333ea" },
+    { label: "Rowhouse", color: "#dc2626" },
+    { label: "Vacant Lot", color: "#6b7280" },
+  ];
+
   return (
-    <div className="min-h-screen bg-[#f8f6f0]">
-      {/* Header with built-in bottom fade */}
+    <div ref={revealRef} className="min-h-screen bg-[#f8f6f0]">
+      {/* Header */}
       <div className="relative bg-[#0a3620] pt-32 pb-20 px-4">
-        <div className="absolute inset-0">
-          <img src={bgProperties} alt="" className="w-full h-full object-cover opacity-20" />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#0a3620]/80 to-[#0a3620]" />
-        </div>
+        <div className="absolute inset-0 bg-gradient-to-b from-[#0a3620]/80 to-[#0a3620]" />
         <div className="relative max-w-7xl mx-auto text-center">
-          <p className="text-xs tracking-[0.3em] uppercase text-[#4ade80] mb-4 font-sans font-medium">Our Residences</p>
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-light text-white mb-4">
+          <p className="text-xs tracking-[0.3em] uppercase text-[#4ade80] mb-4 font-sans font-medium header-animate header-animate-delay-1">Interactive Map</p>
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-light text-white mb-4 header-animate header-animate-delay-2">
             Our <span className="italic">Properties</span>
           </h1>
-          <p className="text-white/50 text-base max-w-xl mx-auto font-light font-sans">
-            Explore our diverse range of quality homes designed to meet every lifestyle and budget
+          <p className="text-white/50 text-base max-w-xl mx-auto font-light font-sans header-animate header-animate-delay-3">
+            Explore the community layout and find your perfect lot
           </p>
-          <div className="w-16 h-[1px] bg-[#15803d] mx-auto mt-6" />
+          <div className="w-16 h-[1px] bg-[#15803d] mx-auto mt-6 header-animate header-animate-delay-4" />
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        {/* Property Types */}
-        <div className="space-y-24">
-          {propertyTypes.map((item, index) => {
-            const Icon = item.icon;
-            const count = getTypeCount(item.type);
-            const priceRange = getTypePriceRange(item.type);
-            const isReversed = index % 2 === 1;
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        {/* Instructions */}
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-6 reveal reveal-up" style={{ animationDuration: '0.6s' }}>
+          <div>
+            <h2 className="text-lg font-medium text-[#0a3620]">Vicmar Homes Community Layout</h2>
+            <p className="text-gray-400 text-sm font-sans font-light">Hover over a lot to see details. Click to view more info. Scroll to zoom.</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowLegend(!showLegend)}
+              className="map-control gap-2 font-sans text-xs border-gray-200"
+            >
+              <Info className="w-3.5 h-3.5" />
+              Legend
+            </Button>
+          </div>
+        </div>
 
-            return (
-              <div
-                key={item.type}
-                className={`flex flex-col ${isReversed ? "lg:flex-row-reverse" : "lg:flex-row"} gap-12 items-center`}
-              >
-                {/* Image */}
-                <div className="w-full lg:w-1/2">
-                  <div className="relative overflow-hidden group">
-                    <img
-                      src={item.image}
-                      alt={item.label}
-                      className="w-full h-[400px] object-cover group-hover:scale-105 transition-transform duration-700"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#0a3620]/70 via-transparent to-transparent" />
-                    <div className="absolute bottom-6 left-6">
-                      <div className="flex items-center gap-3 text-white">
-                        <div className="w-10 h-10 border border-white/40 flex items-center justify-center">
-                          <Icon className="w-5 h-5" />
-                        </div>
-                        <div>
-                          <p className="font-light text-lg">{item.label}</p>
-                          <p className="text-white/60 text-xs tracking-wider uppercase font-sans">{count} Properties Available</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+        {/* Legend */}
+        {showLegend && (
+          <div className="bg-white border border-gray-100 p-4 mb-6">
+            <div className="flex flex-wrap gap-x-6 gap-y-2">
+              {legendItems.map((item) => (
+                <div key={item.label} className="flex items-center gap-2">
+                  <div className="w-4 h-3 rounded-sm" style={{ backgroundColor: item.color, opacity: 0.6 }} />
+                  <span className="text-xs text-gray-600 font-sans">{item.label}</span>
                 </div>
+              ))}
+            </div>
+            <div className="flex flex-wrap gap-x-6 gap-y-2 mt-3 pt-3 border-t border-gray-100">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-emerald-400" />
+                <span className="text-xs text-gray-600 font-sans">Available</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-amber-400" />
+                <span className="text-xs text-gray-600 font-sans">Reserved</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-red-400" />
+                <span className="text-xs text-gray-600 font-sans">Sold</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-gray-400" />
+                <span className="text-xs text-gray-600 font-sans">Vacant</span>
+              </div>
+            </div>
+          </div>
+        )}
 
-                {/* Content */}
-                <div className="w-full lg:w-1/2 space-y-6">
-                  <p className="text-xs tracking-[0.3em] uppercase text-[#15803d] font-sans font-medium">Residence Type</p>
-                  <h2 className="text-3xl md:text-4xl font-light text-[#0a3620]">{item.label}</h2>
-                  <p className="text-gray-500 text-base leading-relaxed font-light font-sans">{item.description}</p>
+        {/* Map Container */}
+        <div
+          ref={containerRef}
+          className="relative bg-white border border-gray-200 overflow-hidden select-none"
+          style={{ cursor: isPanning ? "grabbing" : "grab" }}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={() => { handleMouseUp(); setHoveredProp(null); }}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
+          {/* Zoom Controls */}
+          <div className="map-control absolute top-4 right-4 z-20 flex flex-col gap-1">
+            <button
+              onClick={handleZoomIn}
+              className="w-9 h-9 bg-white/90 backdrop-blur border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors"
+            >
+              <ZoomIn className="w-4 h-4 text-gray-700" />
+            </button>
+            <button
+              onClick={handleZoomOut}
+              className="w-9 h-9 bg-white/90 backdrop-blur border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors"
+            >
+              <ZoomOut className="w-4 h-4 text-gray-700" />
+            </button>
+            <button
+              onClick={handleReset}
+              className="w-9 h-9 bg-white/90 backdrop-blur border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors"
+            >
+              <Maximize2 className="w-4 h-4 text-gray-700" />
+            </button>
+          </div>
 
-                  {priceRange && (
-                    <div className="border-l-2 border-[#15803d] pl-4 py-2">
-                      <p className="text-xs text-gray-400 mb-1 tracking-wider uppercase font-sans">Starting Price</p>
-                      <p className="text-xl font-semibold text-[#15803d] font-sans">{priceRange}</p>
+          {/* Zoom level indicator */}
+          {scale > 1 && (
+            <div className="absolute top-4 left-4 z-20 bg-white/90 backdrop-blur border border-gray-200 px-3 py-1.5">
+              <span className="text-xs text-gray-600 font-sans font-medium">{Math.round(scale * 100)}%</span>
+            </div>
+          )}
+
+          {/* Zoomable/Pannable inner */}
+          <div
+            ref={mapRef}
+            style={{
+              transform: `translate(${translate.x}px, ${translate.y}px) scale(${scale})`,
+              transformOrigin: "center center",
+              transition: isPanning ? "none" : "transform 0.2s ease-out",
+            }}
+          >
+            {/* Base map image */}
+            <div className="relative" style={{ width: "100%" }}>
+              <img
+                src={baseMapImg}
+                alt="Vicmar Homes Community Map"
+                className="w-full h-auto block"
+                draggable={false}
+              />
+
+              {/* SVG Overlay */}
+              <svg
+                className="absolute inset-0 w-full h-full"
+                viewBox={`0 0 ${MAP_NATURAL_WIDTH} ${MAP_NATURAL_HEIGHT}`}
+                preserveAspectRatio="xMidYMid meet"
+                style={{ pointerEvents: "none" }}
+              >
+                {allProperties.map((prop) => {
+                  const points = parseCoords(prop.coords);
+                  const color = typeColors[prop.info.type] || defaultColor;
+                  const isHovered = hoveredProp?.id === prop.id;
+                  const isSelected = selectedProp?.id === prop.id;
+
+                  return (
+                    <polygon
+                      key={prop.id}
+                      points={pointsToSvg(points)}
+                      fill={isHovered || isSelected ? color.hover : color.fill}
+                      stroke={color.stroke}
+                      strokeWidth={isHovered || isSelected ? 2 : 1}
+                      style={{
+                        pointerEvents: "all",
+                        cursor: "pointer",
+                        transition: "fill 0.15s, stroke-width 0.15s",
+                      }}
+                      onMouseMove={(e) => {
+                        e.stopPropagation();
+                        handlePolygonHover(e, prop);
+                      }}
+                      onMouseLeave={() => setHoveredProp(null)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handlePolygonClick(prop);
+                      }}
+                    />
+                  );
+                })}
+              </svg>
+            </div>
+          </div>
+
+          {/* Hover Tooltip (desktop) */}
+          {hoveredProp && !selectedProp && (
+            <div
+              className="tooltip-card absolute z-30 pointer-events-none"
+              style={{
+                left: `${Math.min(tooltipPos.x + 16, (containerRef.current?.clientWidth || 999) - 260)}px`,
+                top: `${Math.min(tooltipPos.y - 10, (containerRef.current?.clientHeight || 999) - 180)}px`,
+              }}
+            >
+              <div className="bg-[#0a3620] text-white p-4 shadow-2xl min-w-[220px] max-w-[280px] border border-[#15803d]/30">
+                <div className="flex items-center gap-2 mb-2">
+                  <MapPin className="w-3.5 h-3.5 text-[#4ade80] flex-shrink-0" />
+                  <span className="text-xs text-[#4ade80] font-sans font-medium tracking-wider uppercase">
+                    Block {hoveredProp.info.blockNum} &middot; {hoveredProp.info.phase}
+                  </span>
+                </div>
+                <h3 className="text-sm font-medium mb-3">{hoveredProp.info.type}</h3>
+
+                {(() => {
+                  const units = getUnitInfo(hoveredProp.info);
+                  if (units.length === 0) return null;
+                  return (
+                    <div className="space-y-2">
+                      {units.map((u, i) => (
+                        <div key={i} className="flex items-center justify-between text-xs">
+                          <span className="text-white/60 font-sans">
+                            {u.key ? `Unit ${u.key}` : ""} Lot {u.data.lotNum}
+                            <span className="text-white/40 ml-1">({u.data.lotArea} sqm)</span>
+                          </span>
+                          <span className="flex items-center gap-1.5">
+                            <span className={`w-1.5 h-1.5 rounded-full ${getAvailabilityDot(u.data.availability)}`} />
+                            <span className={`font-sans font-medium ${getAvailabilityColor(u.data.availability)}`}>
+                              {u.data.availability}
+                            </span>
+                          </span>
+                        </div>
+                      ))}
                     </div>
-                  )}
+                  );
+                })()}
 
-                  <Link to={createPageUrl("Listings") + `?type=${item.type}`}>
-                    <Button className="bg-[#0a3620] hover:bg-[#0f4c2d] gap-2 rounded-none tracking-widest uppercase text-xs font-sans px-8 py-6 mt-2">
-                      View {item.label}
-                      <ArrowRight className="w-4 h-4" />
-                    </Button>
-                  </Link>
+                <div className="mt-3 pt-2 border-t border-white/10">
+                  <p className="text-[10px] text-white/30 font-sans">Click for more details</p>
                 </div>
               </div>
-            );
-          })}
+            </div>
+          )}
         </div>
-      </div>
 
-      {/* CTA Section */}
-      <div className="bg-[#0a3620] py-16">
-          <div className="max-w-3xl mx-auto px-4 text-center">
-            <p className="text-xs tracking-[0.3em] uppercase text-[#4ade80] mb-4 font-sans font-medium">Get In Touch</p>
-            <h2 className="text-3xl md:text-4xl font-light text-white mb-4">
-              Can't Find What You're <span className="italic">Looking</span> For?
-            </h2>
-            <p className="text-white/50 mb-8 font-light font-sans">
-              Contact us and let us help you find the perfect property that matches your needs and budget.
-            </p>
-            <Link to={createPageUrl("Contact")}>
-              <Button className="bg-[#15803d] hover:bg-[#116b33] rounded-none tracking-widest uppercase text-xs font-sans px-10 py-6">
-                Contact Us Today
-              </Button>
-            </Link>
+        {/* Selected Property Detail Card */}
+        {selectedProp && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" onClick={() => setSelectedProp(null)}>
+            <div
+              className="bg-white max-w-md w-full shadow-2xl border border-gray-100 overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Card Header */}
+              <div className="bg-[#0a3620] p-6 relative">
+                <button
+                  onClick={() => setSelectedProp(null)}
+                  className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center text-white/60 hover:text-white transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+                <div className="flex items-center gap-2 mb-2">
+                  <MapPin className="w-4 h-4 text-[#4ade80]" />
+                  <span className="text-xs text-[#4ade80] font-sans font-medium tracking-wider uppercase">
+                    Block {selectedProp.info.blockNum} &middot; {selectedProp.info.phase}
+                  </span>
+                </div>
+                <h3 className="text-xl text-white font-light">{selectedProp.info.type}</h3>
+              </div>
+
+              {/* Card Body */}
+              <div className="p-6">
+                {(() => {
+                  const units = getUnitInfo(selectedProp.info);
+                  if (units.length === 0) return <p className="text-gray-400 text-sm font-sans">No unit information available.</p>;
+
+                  return (
+                    <div className="space-y-3">
+                      <p className="text-xs text-gray-400 font-sans font-medium tracking-wider uppercase mb-3">Unit Details</p>
+                      {units.map((u, i) => (
+                        <div key={i} className="flex items-center justify-between p-3 bg-gray-50 border border-gray-100">
+                          <div>
+                            <p className="text-sm font-medium text-[#0a3620]">
+                              {u.key ? `Unit ${u.key} — ` : ""}Lot {u.data.lotNum}
+                            </p>
+                            <p className="text-xs text-gray-400 font-sans mt-0.5">{u.data.lotArea} sqm</p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className={`w-2 h-2 rounded-full ${getAvailabilityDot(u.data.availability)}`} />
+                            <span className={`text-sm font-sans font-medium ${getAvailabilityColor(u.data.availability).replace('text-', 'text-')}`}
+                              style={{
+                                color: u.data.availability.toLowerCase() === "available" ? "#15803d"
+                                  : u.data.availability.toLowerCase() === "sold" ? "#dc2626"
+                                  : u.data.availability.toLowerCase() === "reserved" ? "#ca8a04"
+                                  : "#6b7280"
+                              }}
+                            >
+                              {u.data.availability}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
+
+                {/* Action buttons */}
+                <div className="mt-6 flex gap-3">
+                  {getListingType(selectedProp.info.type) && (
+                    <Button
+                      onClick={() => handleViewListing(selectedProp.info.type)}
+                      className="flex-1 bg-[#0a3620] hover:bg-[#0f4c2d] rounded-none tracking-widest uppercase text-xs font-sans py-5"
+                    >
+                      View Listings
+                    </Button>
+                  )}
+                  <Button
+                    variant="outline"
+                    onClick={() => setSelectedProp(null)}
+                    className="flex-1 rounded-none tracking-widest uppercase text-xs font-sans py-5 border-gray-200"
+                  >
+                    Close
+                  </Button>
+                </div>
+              </div>
+            </div>
           </div>
+        )}
+
+        {/* Stats Summary */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8 stagger-children">
+          {[
+            { label: "Total Lots", value: allProperties.length },
+            { label: "Duplex Units", value: allProperties.filter(p => p.info.type.toLowerCase().includes("duplex")).length },
+            { label: "Triplex Units", value: allProperties.filter(p => p.info.type.toLowerCase().includes("triplex")).length },
+            { label: "Rowhouse Units", value: allProperties.filter(p => p.info.type.toLowerCase().includes("rowhouse")).length },
+          ].map((stat, idx) => (
+            <div key={idx} className="reveal reveal-up bg-white p-6 text-center border border-gray-100" style={{ animationDuration: '0.5s' }}>
+              <p className="text-2xl font-light text-[#0a3620]">{stat.value}</p>
+              <p className="text-gray-400 text-xs tracking-wider uppercase mt-1 font-sans">{stat.label}</p>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

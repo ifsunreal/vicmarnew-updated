@@ -32,7 +32,7 @@ export default function HeroSection() {
   };
 
   return (
-    <section className="relative h-screen flex items-center justify-center overflow-hidden">
+    <section className="snap-section-hero relative h-screen flex items-center justify-center overflow-hidden">
       {/* Background Video */}
       <div className="absolute inset-0">
         <video
@@ -50,28 +50,28 @@ export default function HeroSection() {
       {/* Content */}
       <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         {/* Decorative line */}
-        <div className="w-16 h-[1px] bg-[#4ade80] mx-auto mb-8" />
+        <div className="w-16 h-[1px] bg-[#4ade80] mx-auto mb-8 hero-animate" />
 
         {/* Subtitle */}
-        <p className="text-sm md:text-base text-[#4ade80] mb-6 tracking-[0.3em] uppercase font-light font-sans">
+        <p className="text-sm md:text-base text-[#4ade80] mb-6 tracking-[0.3em] uppercase font-light font-sans hero-animate hero-animate-delay-1">
           Sustainable Living in Batangas City
         </p>
 
         {/* Main heading - Primland-style dramatic serif */}
-        <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-light text-white leading-tight mb-4">
+        <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-light text-white leading-tight mb-4 hero-animate hero-animate-delay-2">
           <span className="italic text-[#4ade80]">Discover</span> Your
         </h1>
-        <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-light text-white leading-tight mb-8">
+        <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-light text-white leading-tight mb-8 hero-animate hero-animate-delay-2">
           Dream Home
         </h1>
 
         {/* Description */}
-        <p className="text-base md:text-lg text-white/60 mb-12 max-w-2xl mx-auto font-light leading-relaxed font-sans">
+        <p className="text-base md:text-lg text-white/60 mb-12 max-w-2xl mx-auto font-light leading-relaxed font-sans hero-animate hero-animate-delay-3">
           Quality homes designed for modern Filipino families with eco-friendly features and community-focused living.
         </p>
 
         {/* Search Filter Box - refined */}
-        <div className="bg-white/10 backdrop-blur-md border border-white/20 p-6 md:p-8 max-w-3xl mx-auto">
+        <div className="bg-white/10 backdrop-blur-md border border-white/20 p-6 md:p-8 max-w-3xl mx-auto hero-animate hero-animate-delay-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
             {/* Price Range */}
             <div className="md:col-span-1">

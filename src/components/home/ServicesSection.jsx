@@ -2,6 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "../../utils";
 import { Home, TrendingUp, Shield, FileCheck, ArrowRight } from "lucide-react";
+import { useScrollReveal } from "@/hooks/useScrollReveal";
 
 const services = [
   {
@@ -31,29 +32,32 @@ const services = [
 ];
 
 export default function ServicesSection() {
+  const revealRef = useScrollReveal();
+
   return (
-    <section className="py-24 bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section ref={revealRef} className="snap-section min-h-screen py-24 bg-white flex items-center">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
         {/* Section Header */}
         <div className="text-center mb-16">
-          <p className="text-xs tracking-[0.3em] uppercase text-[#15803d] mb-4 font-sans font-medium">Our Services</p>
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-light text-[#0a3620] mb-4">
+          <p className="text-xs tracking-[0.3em] uppercase text-[#15803d] mb-4 font-sans font-medium reveal reveal-up" style={{ animationDuration: '0.6s' }}>Our Services</p>
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-light text-[#0a3620] mb-4 reveal reveal-up" style={{ animationDuration: '0.7s', animationDelay: '0.1s' }}>
             How Can We <span className="italic">Help</span> You?
           </h2>
-          <p className="text-gray-500 max-w-2xl mx-auto font-light font-sans mt-4">
+          <p className="text-gray-500 max-w-2xl mx-auto font-light font-sans mt-4 reveal reveal-up" style={{ animationDuration: '0.7s', animationDelay: '0.15s' }}>
             We're committed to making your dream of owning a home a reality
           </p>
-          <div className="w-16 h-[1px] bg-[#15803d] mx-auto mt-6" />
+          <div className="w-16 h-[1px] bg-[#15803d] mx-auto mt-6 reveal reveal-scale" style={{ animationDuration: '0.6s', animationDelay: '0.2s' }} />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8 stagger-children">
           {services.map((service, index) => {
             const Icon = service.icon;
             return (
               <Link
                 key={index}
                 to={createPageUrl(service.link)}
-                className="group p-8 md:p-10 transition-all duration-500 border border-gray-100 hover:border-[#15803d]/30 bg-white hover:bg-[#f8f6f0]"
+                className="reveal reveal-up group p-8 md:p-10 transition-all duration-500 border border-gray-100 hover:border-[#15803d]/30 bg-white hover:bg-[#f8f6f0]"
+                style={{ animationDuration: '0.6s' }}
               >
                 <div className="w-12 h-12 border border-[#15803d]/30 flex items-center justify-center mb-8 group-hover:bg-[#15803d] group-hover:border-[#15803d] transition-all duration-500">
                   <Icon className="w-5 h-5 text-[#15803d] group-hover:text-white transition-colors duration-500" />

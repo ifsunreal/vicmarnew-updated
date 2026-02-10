@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useScrollReveal } from "@/hooks/useScrollReveal";
 import { base44 } from "@/api/base44Client";
 import { useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -41,6 +42,7 @@ const faqItems = [
 ];
 
 export default function Contact() {
+  const revealRef = useScrollReveal();
   const [contactForm, setContactForm] = useState({
     name: "",
     email: "",
@@ -63,7 +65,7 @@ export default function Contact() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8f6f0]">
+    <div ref={revealRef} className="min-h-screen bg-[#f8f6f0]">
       {/* Header with built-in bottom fade */}
       <div className="relative bg-[#0a3620] pt-32 pb-20 px-4">
         <div className="absolute inset-0">
@@ -71,21 +73,21 @@ export default function Contact() {
           <div className="absolute inset-0 bg-gradient-to-b from-[#0a3620]/80 to-[#0a3620]" />
         </div>
         <div className="relative max-w-7xl mx-auto text-center">
-          <p className="text-xs tracking-[0.3em] uppercase text-[#4ade80] mb-4 font-sans font-medium">Connect With Us</p>
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-light text-white mb-4">
+          <p className="header-animate header-animate-delay-1 text-xs tracking-[0.3em] uppercase text-[#4ade80] mb-4 font-sans font-medium" style={{ animationDuration: '0.6s' }}>Connect With Us</p>
+          <h1 className="header-animate header-animate-delay-2 text-4xl md:text-5xl lg:text-6xl font-light text-white mb-4" style={{ animationDuration: '0.6s' }}>
             Get In <span className="italic">Touch</span>
           </h1>
-          <p className="text-white/50 text-base max-w-xl mx-auto font-light font-sans">
+          <p className="header-animate header-animate-delay-3 text-white/50 text-base max-w-xl mx-auto font-light font-sans" style={{ animationDuration: '0.6s' }}>
             Have questions? We're here to help you find your dream home
           </p>
-          <div className="w-16 h-[1px] bg-[#15803d] mx-auto mt-6" />
+          <div className="header-animate header-animate-delay-4 w-16 h-[1px] bg-[#15803d] mx-auto mt-6" style={{ animationDuration: '0.6s' }} />
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Contact Form */}
-          <div className="bg-white p-8 md:p-10 border border-gray-100">
+          <div className="reveal reveal-left bg-white p-8 md:p-10 border border-gray-100" style={{ animationDuration: '0.7s' }}>
             <p className="text-xs tracking-[0.3em] uppercase text-[#15803d] mb-2 font-sans font-medium">Send a Message</p>
             <h3 className="text-2xl text-[#0a3620] mb-6">Ask a Question</h3>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -145,7 +147,7 @@ export default function Contact() {
           </div>
 
           {/* Contact Info */}
-          <div className="space-y-6">
+          <div className="reveal reveal-right space-y-6" style={{ animationDuration: '0.7s', animationDelay: '0.15s' }}>
             <div className="bg-white p-8 md:p-10 border border-gray-100">
               <p className="text-xs tracking-[0.3em] uppercase text-[#15803d] mb-4 font-sans font-medium">Contact Info</p>
               <div className="space-y-6">
